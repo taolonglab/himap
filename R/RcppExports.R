@@ -2,42 +2,42 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 value_map <- function(x) {
-    .Call('_rexmap_value_map', PACKAGE = 'rexmap', x)
+    .Call(`_rexmap_value_map`, x)
 }
 
 partid_to_fastqid <- function(dada_map, derep_map) {
-    .Call('_rexmap_partid_to_fastqid', PACKAGE = 'rexmap', dada_map, derep_map)
+    .Call(`_rexmap_partid_to_fastqid`, dada_map, derep_map)
 }
 
 consensus_sequence <- function(seqs) {
-    .Call('_rexmap_consensus_sequence', PACKAGE = 'rexmap', seqs)
+    .Call(`_rexmap_consensus_sequence`, seqs)
 }
 
 hamming <- function(s1, s2) {
-    .Call('_rexmap_hamming', PACKAGE = 'rexmap', s1, s2)
+    .Call(`_rexmap_hamming`, s1, s2)
 }
 
 compare_alignment <- function(s1, s2) {
-    .Call('_rexmap_compare_alignment', PACKAGE = 'rexmap', s1, s2)
+    .Call(`_rexmap_compare_alignment`, s1, s2)
 }
 
 compare_alignment_ext <- function(s1, s2) {
-    .Call('_rexmap_compare_alignment_ext', PACKAGE = 'rexmap', s1, s2)
+    .Call(`_rexmap_compare_alignment_ext`, s1, s2)
 }
 
 load_posterior <- function(filename) {
-    .Call('_rexmap_load_posterior', PACKAGE = 'rexmap', filename)
+    .Call(`_rexmap_load_posterior`, filename)
 }
 
 nwalign_endsfree_test <- function(s1, s2, q1, q2, match = 5L, mismatch = -2L) {
-    .Call('_rexmap_nwalign_endsfree_test', PACKAGE = 'rexmap', s1, s2, q1, q2, match, mismatch)
+    .Call(`_rexmap_nwalign_endsfree_test`, s1, s2, q1, q2, match, mismatch)
 }
 
 C_mergepairs <- function(s1, s2, q1, q2, posterior_match_file, posterior_mismatch_file, match, mismatch, gap_p, min_pct_sim, min_aln_len) {
-    .Call('_rexmap_C_mergepairs', PACKAGE = 'rexmap', s1, s2, q1, q2, posterior_match_file, posterior_mismatch_file, match, mismatch, gap_p, min_pct_sim, min_aln_len)
+    .Call(`_rexmap_C_mergepairs`, s1, s2, q1, q2, posterior_match_file, posterior_mismatch_file, match, mismatch, gap_p, min_pct_sim, min_aln_len)
 }
 
 C_nwalign <- function(s1, s2, match, mismatch, indel) {
-    .Call('_rexmap_C_nwalign', PACKAGE = 'rexmap', s1, s2, match, mismatch, indel)
+    .Call(`_rexmap_C_nwalign`, s1, s2, match, mismatch, indel)
 }
 

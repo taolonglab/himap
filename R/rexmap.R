@@ -8,7 +8,7 @@
 #' @importFrom data.table copy
 #' @importFrom dada2 filterAndTrim
 #' @importFrom stringr str_sub
-#' @useDynLib rexmap
+#' @useDynLib rexmap, .registration = TRUE
 NULL
 
 pname = 'RExMap'

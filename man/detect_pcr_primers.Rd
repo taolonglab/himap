@@ -11,17 +11,47 @@ detect_pcr_primers(
   max_mismatch = 3,
   nseqs = 1000,
   nseqs_seed = 42,
-  min_seqs_pct = 5,
+  min_seqs_pct = 50,
   ncpu = 1,
   ncpu_seqs = 4,
   verbose = T,
   debug = F
 )
 }
+\arguments{
+\item{fq}{Path to the FASTQ file with merged reads to analyze.}
+
+\item{pr_fwd_maxoff}{Maximum offset for the FORWARD primer from the start of
+the read.}
+
+\item{pr_rev_maxoff}{Maximum offset for the REVERSE primer from the start of
+the read.}
+
+\item{max_mismatch}{Maximum number of nucleotide mismatch for the primer
+alignment.}
+
+\item{nseqs}{Number of sequences to randomly sample from the FASTQ file.}
+
+\item{nseqs_seed}{Random seed for the sequence sampling.}
+
+\item{min_seqs_pct}{Minimum percent of reads that need to align to the primer
+sequence, so that we would consider this primer as a potential PCR primer.}
+
+\item{ncpu}{Number of primer sequences to run in parallel.}
+
+\item{ncpu_seqs}{Number read data sequences to run in parallel. Total number
+of CPU threads willbe ncpu * ncpu_seqs.}
+
+\item{verbose}{Verbose output.}
+
+\item{debug}{Print debugging information to stdout.}
+}
 \description{
 Samples `nseqs` from an input FASTQ file with merged forward and reverse
 reads `fq`, then aligns all combinations of primer pairs from RExMapDB.
-These can be seen using `rexmap_option('blast_dbs')`.
+These can be seen using `rexmap_option('blast_dbs')`. Based on these alignments
+and the parameter `min_seqs_pct`, it will try to guess the possible hypervariable
+region by matching a forward and reverse primer.
 }
 \details{
 Returns a most likely hypervariable region as a character string.

@@ -18,7 +18,8 @@ remove_pcr_primers(
   ncpu = 1,
   ncpu_sample = rexmap_option("ncpu"),
   verbose = rexmap_option("verbose"),
-  overwrite = TRUE
+  overwrite = TRUE,
+  extended_code_alignment = FALSE
 )
 }
 \arguments{

@@ -11,6 +11,7 @@ detect_overlap_length(
   match = 5L,
   mismatch = -5L,
   gap_p = -7L,
+  rc_forward = FALSE,
   rc_reverse = TRUE,
   ncpu = rexmap_option("ncpu"),
   nseqs = 1000,

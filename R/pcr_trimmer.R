@@ -2,15 +2,34 @@
 #'
 #' Samples `nseqs` from an input FASTQ file with merged forward and reverse
 #' reads `fq`, then aligns all combinations of primer pairs from RExMapDB.
-#' These can be seen using `rexmap_option('blast_dbs')`.
+#' These can be seen using `rexmap_option('blast_dbs')`. Based on these alignments
+#' and the parameter `min_seqs_pct`, it will try to guess the possible hypervariable
+#' region by matching a forward and reverse primer.
 #'
 #' Returns a most likely hypervariable region as a character string.
+#'
+#' @param fq Path to the FASTQ file with merged reads to analyze.
+#' @param pr_fwd_maxoff Maximum offset for the FORWARD primer from the start of
+#' the read.
+#' @param pr_rev_maxoff Maximum offset for the REVERSE primer from the start of
+#' the read.
+#' @param max_mismatch  Maximum number of nucleotide mismatch for the primer
+#' alignment.
+#' @param nseqs Number of sequences to randomly sample from the FASTQ file.
+#' @param nseqs_seed Random seed for the sequence sampling.
+#' @param min_seqs_pct Minimum percent of reads that need to align to the primer
+#' sequence, so that we would consider this primer as a potential PCR primer.
+#' @param ncpu Number of primer sequences to run in parallel.
+#' @param ncpu_seqs Number read data sequences to run in parallel. Total number
+#' of CPU threads willbe ncpu * ncpu_seqs.
+#' @param verbose Verbose output.
+#' @param debug Print debugging information to stdout.
 #'
 #' @export
 detect_pcr_primers = function (fq,
                                # pr_fwd=NULL, pr_rev=NULL,
                                pr_fwd_maxoff=35, pr_rev_maxoff=35, max_mismatch=3,
-                               nseqs=1000, nseqs_seed=42, min_seqs_pct=5,
+                               nseqs=1000, nseqs_seed=42, min_seqs_pct=50,
                                ncpu=1, ncpu_seqs=4,
                                verbose=T, debug=F
                                ) {
@@ -234,7 +253,7 @@ detect_pcr_primers = function (fq,
      # so we want to catch both cases.
      if (fwd_primer_best_dir == 'F') {
        # OK first one is already F, so find R among the others
-       rev_primer_best.dt = primer_alignments.dt[
+       rev_primer_best.dt = good_alignments.dt[
          rev_pct_bin==sort(rev_pct_bin, decreasing=T)[1] & grepl('R$', pr_id)]
 
        if (nrow(rev_primer_best.dt[grepl('R$', pr_id)]) > 0) {

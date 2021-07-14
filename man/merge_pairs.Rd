@@ -13,6 +13,7 @@ merge_pairs(
   match = 5L,
   mismatch = -5L,
   gap_p = -7L,
+  rc_forward = FALSE,
   rc_reverse = TRUE,
   ncpu = rexmap_option("ncpu"),
   ncpu_samples = 1,
@@ -37,6 +38,8 @@ merge_pairs(
 \item{mismatch}{Score for character mismatch in the alignment (default: -5)}
 
 \item{gap_p}{Score for gap penalty, either gap opening on gap extension (default: -7).}
+
+\item{rc_forward}{TRUE/FALSE Reverse complement forward reads? (default: FALSE)}
 
 \item{rc_reverse}{TRUE/FALSE Reverse complement reverse reads? (default: TRUE)}
 
