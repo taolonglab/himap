@@ -30,7 +30,7 @@ detect_pcr_primers = function (fq,
                                # pr_fwd=NULL, pr_rev=NULL,
                                pr_fwd_maxoff=35, pr_rev_maxoff=35, max_mismatch=3,
                                nseqs=1000, nseqs_seed=42, min_seqs_pct=50,
-                               ncpu=1, ncpu_seqs=4,
+                               ncpu=4, ncpu_seqs=1,
                                verbose=T, debug=F
                                ) {
    # Detect PCR primers in a single or multiple FASTQ files, given as an input
