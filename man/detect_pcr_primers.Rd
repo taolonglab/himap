@@ -12,8 +12,8 @@ detect_pcr_primers(
   nseqs = 1000,
   nseqs_seed = 42,
   min_seqs_pct = 50,
-  ncpu = 1,
-  ncpu_seqs = 4,
+  ncpu = 4,
+  ncpu_seqs = 1,
   verbose = T,
   debug = F
 )

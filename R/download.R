@@ -275,11 +275,17 @@ update_pcr_primers_table = function (backup_old=T, verbose=T) {
 
 #' RExMap database from RExMapDB
 #'
-#' Update/replace database with RExMapDB latest version.
+#' Update/replace database with RExMapDB latest version. This deletes the
+#' current database files from find.package('rexmap')/inst/database, then
+#' downloads the files from RExMapDB Github repository.
+#'
+#' @param delete_old Delete old files during an update.
+#' @param verbose Display progress messeges.
+#' @param use_api Use GitHub API. Warning: has 60 requests/hr hard limit.
 #'
 #' @export
 
-download_database = function (overwrite=TRUE, verbose=TRUE, use_api=FALSE) {
+download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
 
    if (verbose) cat('RExMap database update\n')
    if (verbose) cat('  Check internet connection... ')
@@ -289,16 +295,19 @@ download_database = function (overwrite=TRUE, verbose=TRUE, use_api=FALSE) {
    if (verbose) cat('Local DB path:', local_db_path, '\n')
    curlpath = curl_path()
    if (verbose) cat('Curl:', curlpath, '\n')
-   if (verbose) cat('Deleting current database files:\n')
+   if (verbose) cat('Retrieving current database files:\n')
    local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
                         full.names=TRUE)
    if (length(local_db_files) == 0) {
       if (verbose) cat('  No files found.\n')
+      old_files.dt = data.table()
    } else {
-      for (f in local_db_files) {
-         file.remove(f)
-         if (verbose) cat('  L deleted:', f, '\n')
-      }
+      old_files.dt = as.data.table(file.info(local_db_files, extra_cols=F))
+      old_files.dt[, filename := basename(local_db_files)]
+      # for (f in local_db_files) {
+      #    file.remove(f)
+      #    if (verbose) cat('  L deleted:', f, '\n')
+      # }
    }
    if (verbose) cat('OK.\n')
 
@@ -371,6 +380,24 @@ download_database = function (overwrite=TRUE, verbose=TRUE, use_api=FALSE) {
    db.dt[, Database_name := sub('\\.[^\\.]+$', '', name)]
 
    if (verbose) cat('* OK.\n')
+
+   # Delete old files that have not been updated
+   if (verbose) cat('Deleting old files...')
+   new_local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
+                            full.names=TRUE)
+   new_files.dt = as.data.table(file.info(new_local_db_files, extra_cols=F))
+   new_files.dt[, filename := basename(new_local_db_files)]
+   files.dt = merge(old_files.dt, new_files.dt, by='filename', all.x=T)[
+      !is.na(mtime.y) & !is.na(ctime.y) & !is.na(atime.y) & !is.na(size.y)
+   ][mtime.x != mtime.y | size.x != size.y]
+   if (nrow(files) > 0) {
+      if (delete_old) {
+         fr = file.remove(files.dt[, filename])
+      }
+   }
+   if (verbose) cat(' OK.\n')
+
+
 
    # Generate a reference table
    if (verbose) cat('  Downloading reference table...')
