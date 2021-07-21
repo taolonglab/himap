@@ -12,3 +12,4 @@ r_old
 src_old
 .ipynb_checkpoints
 pipeline.Rmd
+inst/database/*.*
