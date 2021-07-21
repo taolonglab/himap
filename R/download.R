@@ -292,7 +292,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    if (!internet_connection()) stop('\nError: Internet connection unavailable.')
    if (verbose) cat('OK.\n')
    # local_db_path = file.path(find.package(pname_l), 'database')
-   local_db_path = system.file('database', package='rexmap')
+   local_db_path = system.file('database', package=pname_l)
    if (verbose) cat('Local DB path:', local_db_path, '\n')
    curlpath = curl_path()
    if (verbose) cat('Curl:', curlpath, '\n')
@@ -308,11 +308,10 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
       old_files.dt[, filename_full := local_db_files]
       for (f in local_db_files) {
          file.remove(f)
-         if (verbose) cat('  L deleted:', f, '\n')
+         # if (verbose) cat('  L deleted:', f, '\n')
       }
    }
    if (verbose) cat('OK.\n')
-
 
    if (verbose) cat('Downloading database files:\n')
 
@@ -366,7 +365,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
       db_files_url = paste(db_file_prefix, db_files, sep='')
       for (i in 1:length(db_files)) {
          f = db_files[i]
-         if (verbose) cat('    ', f, '\n')
+         # if (verbose) cat('    ', f, '\n')
          system2(curlpath, c(
             '-s',
             '-L', db_files_url[i],
@@ -378,7 +377,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    db.dt[, Hypervariable_region := sub(
       '^(V[0-9][-]?[V]?[0-9]?)_.*$', '\\1', name)]
    db.dt[, Primer_pair := sub(
-      '^V[0-9][-]?[V]?[0-9]?_([0-9]{1,4}F-[0-9]{1,4}[m]?R)_.*$', '\\1', name)]
+      '^V[0-9][-]?[V]?[0-9]?_([0-9]{1,4}[m]?F-[0-9]{1,4}[m]?R)_.*$', '\\1', name)]
    db.dt[, Database_name := sub('\\.[^\\.]+$', '', name)]
 
    if (verbose) cat('* OK.\n')

@@ -729,7 +729,7 @@ datatable_to_string = function (dt, max_chars=50) {
 
    # Format individual columns, then transpose list so that the values are
    # listed by rows
-   columns_values = transpose(lapply(
+   columns_values = data.table::transpose(lapply(
       columns,
       function (col) {
          column = c(col, dt[, as.character(get(col))])

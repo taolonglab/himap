@@ -175,13 +175,13 @@ rexmap_setoption = function (option_name, value) {
 himap_setoption = rexmap_setoption
 
 
-check_database_files = function () {
+check_database_files = function (verbose=TRUE) {
   # Check if all files are present for each hypervariable region in the PCR
   # primers table.
   pcr.dt = rexmap_option('blast_dbs')
   if (nrow(pcr.dt) == 0) return(NA)
 
-  local_db_path = file.path(find.package(pname_l), 'inst', 'database')
+  local_db_path = system.file('database', package=pname_l)
   local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
                        full.names=TRUE)
   local_db_filenames = basename(local_db_files)
@@ -200,6 +200,7 @@ check_database_files = function () {
     , by=.(DB, table)]
 
   if (!all(pcr_valid.dt[, valid])) {
+    if (verbose) cat(datatable_to_string(pcr_valid.dt))
     return(FALSE)
   } else {
     return(TRUE)
@@ -225,7 +226,7 @@ check_database_files = function () {
   # files and 1 table with matching primers...
   db_check = check_database_files()
   if (is.na(db_check) | !db_check) {
-    cat('RExMap: Errors in database.\n')
+    cat('RExMap: Database empty or contains errors.\n')
     download_database()
   }
 
