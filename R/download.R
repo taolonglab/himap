@@ -273,6 +273,157 @@ update_pcr_primers_table = function (backup_old=T, verbose=T) {
 
 
 
+#' RExMap database from RExMapDB
+#'
+#' Update/replace database with RExMapDB latest version.
+#'
+#' @export
+
+download_database = function (overwrite=TRUE, verbose=TRUE, use_api=FALSE) {
+
+   if (verbose) cat('RExMap database update\n')
+   if (verbose) cat('  Check internet connection... ')
+   if (!internet_connection()) stop('\nError: Internet connection unavailable.')
+   if (verbose) cat('OK.\n')
+   local_db_path = file.path(find.package(pname_l), 'inst', 'database')
+   if (verbose) cat('Local DB path:', local_db_path, '\n')
+   curlpath = curl_path()
+   if (verbose) cat('Curl:', curlpath, '\n')
+   if (verbose) cat('Deleting current database files:\n')
+   local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
+                        full.names=TRUE)
+   if (length(local_db_files) == 0) {
+      if (verbose) cat('  No files found.\n')
+   } else {
+      for (f in local_db_files) {
+         file.remove(f)
+         if (verbose) cat('  L deleted:', f, '\n')
+      }
+   }
+   if (verbose) cat('OK.\n')
+
+
+   if (verbose) cat('Downloading database files:\n')
+
+   if (use_api) {
+      # Run curl | retrieve rexmapdb list of databases
+      json_out = paste(system2(curlpath, c(
+         '-L', 'https://api.github.com/repos/taolonglab/rexmapdb/contents/database/'
+      ), stdout=T, stderr=F), collapse='')
+
+      # Convert JSON output to data table
+      db.dt = tryCatch(
+         data.table::as.data.table(as.list(jsonlite::fromJSON(json_out)))[, c(1,4,11)],
+         error = function (e) NULL)
+      if (is.null(db.dt)) {
+         if (verbose) cat('ERROR retrieving JSON from Github:', json_out, '\n')
+         return()
+      }
+      db.dt = db.dt[grepl('V[0-9][-]?(V[0-9])?', name)]
+      for (i in 1:nrow(db.dt)) {
+         f = db.dt[i, 3]
+         if (verbose) cat('   ', db.dt[i, name], '\n')
+         # download.file(f, file.path(himap_database_path, basename(f)), extra=c(
+         system2(curlpath, c(
+            '-s',
+            '-H', '"Accept: application/vnd.github.v3.raw"',
+            '-L', f,
+            '-o', file.path(local_db_path, db.dt[i, name])
+         ), stdout=F, stderr=F)
+      }
+   } else {
+      # Fall back to HTML extraction if API doesnt work
+      db_list_out = system2(
+         curlpath, c(
+            '-s',
+            'https://github.com/taolonglab/rexmapdb/tree/master/database'
+         ),
+         stdout=TRUE, stderr=FALSE
+      )
+      db_files_out = grep(
+         'href="/taolonglab/rexmapdb/blob/master/database/V[0-9][^\\.]+\\.nsq"',
+         db_list_out, value=T)
+      db_file_prefix = 'https://github.com/taolonglab/rexmapdb/raw/master/database/'
+      db_files = sub('.*href="/taolonglab/rexmapdb/blob/master/database/(V[0-9][^\\.]+?\\.nsq)".*',
+                     '\\1', db_files_out)
+      db_files = c(
+         db_files,
+         sub('\\.nsq$', '\\.nin', db_files),
+         sub('\\.nsq$', '\\.nhr', db_files),
+         sub('\\.nsq$', '\\.txt', db_files)
+      )
+      db_files_url = paste(db_file_prefix, db_files, sep='')
+      for (i in 1:length(db_files)) {
+         f = db_files[i]
+         if (verbose) cat('    ', f, '\n')
+         system2(curlpath, c(
+            '-s',
+            '-L', db_files_url[i],
+            '-o ', file.path(local_db_path, f)
+         ), stdout=F, stderr=F)
+      }
+      db.dt = data.table(name=basename(db_files))
+   }
+   db.dt[, Hypervariable_region := sub(
+      '^(V[0-9][-]?[V]?[0-9]?)_.*$', '\\1', name)]
+   db.dt[, Primer_pair := sub(
+      '^V[0-9][-]?[V]?[0-9]?_([0-9]{1,4}F-[0-9]{1,4}[m]?R)_.*$', '\\1', name)]
+   db.dt[, Database_name := sub('\\.[^\\.]+$', '', name)]
+
+   if (verbose) cat('* OK.\n')
+
+   # Generate a reference table
+   if (verbose) cat('  Downloading reference table...')
+   if (use_api) {
+      pcr_out = paste(trimws(system2(curlpath, c(
+         '-s',
+         '-H', '"Accept: application/vnd.github.v3.raw"',
+         '-L', 'https://api.github.com/repos/taolonglab/rexmapdb/contents/primers/pcr_primers_table.txt'
+         # '-o', system.file('extdata', 'pcr_primers_table.txt', package=pname_l)
+      ), stdout=TRUE, stderr=FALSE)), collapse='\n')
+   } else {
+      pcr_out = system2(
+         curlpath, c(
+            '-s',
+            '-L', 'https://raw.githubusercontent.com/taolonglab/rexmapdb/master/primers/pcr_primers_table.txt'
+         ), stdout=T, stderr=F
+      )
+   }
+   pcr.dt = tryCatch(
+      data.table::fread(text=pcr_out),
+      error = function (e) NULL)
+   if (is.null(pcr.dt)) {
+      if (verbose) cat('ERROR retrieving PCR primers table:', pcr_out, '\n')
+      return()
+   }
+   pcr.dt[, Primer_pair := paste(Primer1, Primer2, sep='-')]
+   pcr_db.dt = merge(
+      pcr.dt,
+      unique(
+         db.dt[
+            , .(Hypervariable_region, Primer_pair,
+                DB=Database_name, table=paste(Database_name, '.txt', sep=''))
+         ]
+      ),
+      by=c('Hypervariable_region', 'Primer_pair')
+   )
+   pcr_db.dt[, date := sub('^.*([0-9]{4}-[0-9]{2}-[0-9]{2}).*$', '\\1', DB)]
+   if (verbose) cat('OK.\n')
+
+   # Write pcr primers table
+   if (verbose) cat('  Writing PCR primers table...')
+   pcr_out_file = system.file('extdata', 'pcr_primers_table.txt',
+                              package=pname_l)
+   fwrite(pcr_db.dt, pcr_out_file, sep='\t')
+   if (verbose) cat('OK.\n')
+   # Reload rexmap options
+   reload_blast_dbs()
+   if (verbose) cat('Done.\n')
+
+}
+
+
+
 
 #' Update the RExMap database
 #'
@@ -304,7 +455,7 @@ update_database = function (verbose=T, source_repo='rexmap', update_ref_table=FA
       ), stdout=T, stderr=F), collapse='')
    } else if (source_repo == 'rexmapdb') {
       json_out = paste(system2(curlpath, c(
-         '-L', 'https://api.github.com/repos/taolonglab/rexmapdb/contents/database_latest/'
+         '-L', 'https://api.github.com/repos/taolonglab/rexmapdb/contents/database/'
       ), stdout=T, stderr=F), collapse='')
    }
 
