@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^manuscript$
+^r_old$
+^src_old$
+^\.Rhistory$
+
