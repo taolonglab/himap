@@ -16,7 +16,7 @@ download_blast = function (verbose=T, override_os=NULL) {
    } else {
       sys_os = override_os
    }
-   if (verbose) cat('* Operating system:', sys_os, '\n')
+   if (verbose) cat('  Operating system:', sys_os, '\n')
 
    # Check internet connection
    if (!internet_connection()) {
@@ -24,7 +24,7 @@ download_blast = function (verbose=T, override_os=NULL) {
    }
 
    # Check newest version
-   if (verbose) cat('* Checking latest version...')
+   if (verbose) cat('  Checking latest version...')
    curlpath = curl_path()
    ncbi_blast_url = 'ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/'
    latest_files = system2(curlpath, c(ncbi_blast_url), stdout=T, stderr=F)
@@ -44,19 +44,19 @@ download_blast = function (verbose=T, override_os=NULL) {
    blast_url = paste0(ncbi_blast_url, latest_file2)
 
    # Download into temp folder
-   if (verbose) cat('* Downloading executables...')
+   if (verbose) cat('  Downloading executables...')
    blast_file_gz = file.path(tempdir(), basename(blast_url))
    download.file(blast_url, blast_file_gz, quiet=T)
    if (verbose) cat('OK.\n')
 
    # Unpack
-   if (verbose) cat('* Unpacking...')
+   if (verbose) cat('  Unpacking...')
    blast_files = untar(blast_file_gz, verbose=F, list=T, exdir = tempdir())
    untar(blast_file_gz, verbose=F, exdir = tempdir())
    if (verbose) cat(' OK.\n')
 
    # Copy to RExMap folder
-   if (verbose) cat('* Copying...')
+   if (verbose) cat('  Copying...')
    blast_exec = file.path(dirname(blast_file_gz),
                           grep('/bin/blastn$', blast_files, value=T))
    makedb_exec = file.path(dirname(blast_file_gz),
@@ -74,7 +74,7 @@ download_blast = function (verbose=T, override_os=NULL) {
    if (verbose) cat(' OK.\n')
 
    # Clean up files in the temp folder
-   if (verbose) cat('* Cleaning temporary files...')
+   if (verbose) cat('  Cleaning temporary files...')
    temp_dirs = grep('/$', blast_files, value=T)
    temp_files = blast_files[!(blast_files %in% temp_dirs)]
    file.remove(file.path(tempdir(), temp_files))

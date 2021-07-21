@@ -175,6 +175,38 @@ rexmap_setoption = function (option_name, value) {
 himap_setoption = rexmap_setoption
 
 
+check_database_files = function () {
+  # Check if all files are present for each hypervariable region in the PCR
+  # primers table.
+  pcr.dt = rexmap_option('blast_dbs')
+  if (nrow(pcr.dt) == 0) return(NA)
+
+  local_db_path = file.path(find.package(pname_l), 'inst', 'database')
+  local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
+                       full.names=TRUE)
+  local_db_filenames = basename(local_db_files)
+  local_db_filenames_tables = local_db_filenames[local_db_filenames %like% '\\.txt$']
+  local_db_filenames_dbnhr = local_db_filenames[local_db_filenames %like% '\\.nhr$']
+  local_db_filenames_dbnsq = local_db_filenames[local_db_filenames %like% '\\.nsq$']
+  local_db_filenames_dbnin = local_db_filenames[local_db_filenames %like% '\\.nin$']
+
+  # For each PCR primer pair, check 1) copy number table, 2) blast db files
+  pcr_valid.dt = pcr.dt[
+    , .(valid = if (.BY[[2]] %in% local_db_filenames_tables &
+                    paste0(.BY[[1]], '.nhr') %in% local_db_filenames_dbnhr &
+                    paste0(.BY[[1]], '.nsq') %in% local_db_filenames_dbnsq &
+                    paste0(.BY[[1]], '.nin') %in% local_db_filenames_dbnin) TRUE
+                else FALSE)
+    , by=.(DB, table)]
+
+  if (!all(pcr_valid.dt[, valid])) {
+    return(FALSE)
+  } else {
+    return(TRUE)
+  }
+
+}
+
 #' Run this when the package is loaded and attached in R
 .onAttach = function (libname, pkgname) {
 
@@ -191,9 +223,11 @@ himap_setoption = rexmap_setoption
 
   # Check if database files are missing. Need at least one set of blastdb
   # files and 1 table with matching primers...
-
-  # Reload database info
-  reload_blast_dbs()
+  db_check = check_database_files()
+  if (is.na(db_check) | !db_check) {
+    cat('RExMap: errors in database.')
+    download_database()
+  }
 
   # Generate a unique list of all available hypervariable regions
   hregions = sub('_$', '', sub('[0-9]{4}-[0-9]{2}-[0-9]{2}$', '',
@@ -204,32 +238,36 @@ himap_setoption = rexmap_setoption
   hregions_str = paste(unique(sort(hregions)), collapse=', ')
   last_date = rexmap_option('blast_dbs')[, max(date)]
 
-  startup_message = paste0(
-     '| RExMap',
-    # ' | Updated ', rexmap_option('database_build_version'),
-    ' | ', last_date,
-    ' | ',
-    hregions_str,
-    # paste(unique(sort(rexmap_option('blast_dbs')[
-    #   , sub('_$', '', sub('^(V[0-9]+(\\-|_)(V[0-9]+)?).*$', '\\1', Hypervariable_region))]
-    # )), collapse=', '),
-    ' | Threads: ', rexmap_option('ncpu'), ' |'
-  )
-  # Positions of separators
-  startup_msg_separators = as.integer(gregexpr('|', startup_message, fixed=T)[[1]])
-  startup_msg_topbotframe = paste(
-    mapply(
-      function (x0, x1) paste0('+', paste(rep('-', x1-x0-1), collapse='')),
-      startup_msg_separators[1:(length(startup_msg_separators)-1)],
-      startup_msg_separators[2:length(startup_msg_separators)]
-    ),
-  collapse='')
-  # Put together final startup string with line endings
-  startup_message_full = paste0(
-    startup_msg_topbotframe, '+\n',
-    startup_message, '\n',
-    startup_msg_topbotframe, '+'
-  )
+  # startup_message = paste0(
+  #    '| RExMap',
+  #   # ' | Updated ', rexmap_option('database_build_version'),
+  #   ' | ', last_date,
+  #   ' | ',
+  #   hregions_str,
+  #   # paste(unique(sort(rexmap_option('blast_dbs')[
+  #   #   , sub('_$', '', sub('^(V[0-9]+(\\-|_)(V[0-9]+)?).*$', '\\1', Hypervariable_region))]
+  #   # )), collapse=', '),
+  #   ' | Threads: ', rexmap_option('ncpu'), ' |'
+  # )
+  # # Positions of separators
+  # startup_msg_separators = as.integer(gregexpr('|', startup_message, fixed=T)[[1]])
+  # startup_msg_topbotframe = paste(
+  #   mapply(
+  #     function (x0, x1) paste0('+', paste(rep('-', x1-x0-1), collapse='')),
+  #     startup_msg_separators[1:(length(startup_msg_separators)-1)],
+  #     startup_msg_separators[2:length(startup_msg_separators)]
+  #   ),
+  # collapse='')
+  # # Put together final startup string with line endings
+  # startup_message_full = paste0(
+  #   startup_msg_topbotframe, '+\n',
+  #   startup_message, '\n',
+  #   startup_msg_topbotframe, '+'
+  # )
+
+  startup_message_full = paste0(pname, ' | ', length(hregions),
+                                ' regions | DB: ', last_date)
+
   end_time = Sys.time()
   dt = end_time - start_time
 

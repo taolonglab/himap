@@ -701,3 +701,48 @@ filter_and_trim = function (fq_in, fq_out, maxEE=2,
 }
 
 
+format_string = Vectorize(function (x, max_chars=50) {
+   x_len = nchar(x)
+   if (x_len == max_chars) {
+      return(x)
+   } else if (x_len > max_chars) {
+      return(paste0(substring(x, 1, max_chars-3), '...'))
+   } else {
+      # x_len < max_width
+      return(sprintf(paste0('% ', max_chars, 's'), x))
+   }
+}, vectorize.args=c('x'), SIMPLIFY=T, USE.NAMES=F)
+
+
+datatable_to_string = function (dt, max_chars=50) {
+   # Print data table to string; useful for logging
+   columns = names(dt)
+   column_classes = sapply(dt, class)
+   # Find the maximum width of each column
+   column_widths = sapply(columns, function (col) {
+      min_width = min(
+         c(max_chars,
+           max(dt[, nchar(get(col))], nchar(col), na.rm=T)
+         ), na.rm=T)
+      return(min_width)
+   })
+
+   # Format individual columns, then transpose list so that the values are
+   # listed by rows
+   columns_values = transpose(lapply(
+      columns,
+      function (col) {
+         column = c(col, dt[, as.character(get(col))])
+         column_width = min(c(
+            max_chars,
+            max(nchar(column), na.rm=T)
+         ), na.rm=T)
+         format_string(column, max_chars=column_width)
+      }
+   ))
+
+   # Collapse rows with space, columns with '\n'
+   out = paste(unlist(lapply(columns_values, paste, collapse=' ')), collapse='\n ')
+   return(paste0(' ', out))
+
+}
