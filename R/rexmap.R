@@ -225,7 +225,7 @@ check_database_files = function () {
   # files and 1 table with matching primers...
   db_check = check_database_files()
   if (is.na(db_check) | !db_check) {
-    cat('RExMap: errors in database.')
+    cat('RExMap: Errors in database.\n')
     download_database()
   }
 
