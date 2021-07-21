@@ -305,10 +305,11 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    } else {
       old_files.dt = as.data.table(file.info(local_db_files, extra_cols=F))
       old_files.dt[, filename := basename(local_db_files)]
-      # for (f in local_db_files) {
-      #    file.remove(f)
-      #    if (verbose) cat('  L deleted:', f, '\n')
-      # }
+      old_files.dt[, filename_full := local_db_files]
+      for (f in local_db_files) {
+         file.remove(f)
+         if (verbose) cat('  L deleted:', f, '\n')
+      }
    }
    if (verbose) cat('OK.\n')
 
@@ -383,20 +384,15 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    if (verbose) cat('* OK.\n')
 
    # Delete old files that have not been updated
-   if (verbose) cat('Deleting old files...')
-   new_local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
-                            full.names=TRUE)
-   new_files.dt = as.data.table(file.info(new_local_db_files, extra_cols=F))
-   new_files.dt[, filename := basename(new_local_db_files)]
-   files.dt = merge(old_files.dt, new_files.dt, by='filename', all.x=T)[
-      !is.na(mtime.y) & !is.na(ctime.y) & !is.na(atime.y) & !is.na(size.y)
-   ][mtime.x != mtime.y | size.x != size.y]
-   if (nrow(files.dt) > 0) {
-      if (delete_old) {
-         fr = file.remove(files.dt[, filename])
-      }
-   }
-   if (verbose) cat(' OK.\n')
+   # if (verbose) cat('Deleting old files...')
+   # new_local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
+   #                          full.names=TRUE)
+   # new_files.dt = as.data.table(file.info(new_local_db_files, extra_cols=F))
+   # new_files.dt[, filename := basename(new_local_db_files)]
+   # files.dt = merge(old_files.dt, new_files.dt, by='filename', all.x=T)[
+   #    !is.na(mtime.y) & !is.na(ctime.y) & !is.na(atime.y) & !is.na(size.y)
+   # ][mtime.x == mtime.y | size.x != size.y]
+   # if (verbose) cat(' OK.\n')
 
 
 
@@ -414,7 +410,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
          curlpath, c(
             '-s',
             '-L', 'https://raw.githubusercontent.com/taolonglab/rexmapdb/master/primers/pcr_primers_table.txt'
-         ), stdout=T, stderr=F
+         ), stdout=TRUE, stderr=FALSE
       )
    }
    pcr.dt = tryCatch(
@@ -442,7 +438,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    if (verbose) cat('  Writing PCR primers table...')
    pcr_out_file = system.file('extdata', 'pcr_primers_table.txt',
                               package=pname_l)
-   fwrite(pcr_db.dt, pcr_out_file, sep='\t')
+   data.table::fwrite(pcr_db.dt, pcr_out_file, sep='\t')
    if (verbose) cat('OK.\n')
    # Reload rexmap options
    reload_blast_dbs()
