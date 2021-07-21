@@ -291,7 +291,8 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    if (verbose) cat('  Check internet connection... ')
    if (!internet_connection()) stop('\nError: Internet connection unavailable.')
    if (verbose) cat('OK.\n')
-   local_db_path = file.path(find.package(pname_l), 'inst', 'database')
+   # local_db_path = file.path(find.package(pname_l), 'database')
+   local_db_path = system.file('database', package='rexmap')
    if (verbose) cat('Local DB path:', local_db_path, '\n')
    curlpath = curl_path()
    if (verbose) cat('Curl:', curlpath, '\n')
@@ -300,7 +301,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
                         full.names=TRUE)
    if (length(local_db_files) == 0) {
       if (verbose) cat('  No files found.\n')
-      old_files.dt = data.table()
+      old_files.dt = data.table(filename=character())
    } else {
       old_files.dt = as.data.table(file.info(local_db_files, extra_cols=F))
       old_files.dt[, filename := basename(local_db_files)]
@@ -390,7 +391,7 @@ download_database = function (delete_old=TRUE, verbose=TRUE, use_api=FALSE) {
    files.dt = merge(old_files.dt, new_files.dt, by='filename', all.x=T)[
       !is.na(mtime.y) & !is.na(ctime.y) & !is.na(atime.y) & !is.na(size.y)
    ][mtime.x != mtime.y | size.x != size.y]
-   if (nrow(files) > 0) {
+   if (nrow(files.dt) > 0) {
       if (delete_old) {
          fr = file.remove(files.dt[, filename])
       }

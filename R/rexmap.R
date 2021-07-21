@@ -185,10 +185,10 @@ check_database_files = function () {
   local_db_files = dir(local_db_path, 'V[0-9].*\\.(?:txt|nin|nhr|nsq)',
                        full.names=TRUE)
   local_db_filenames = basename(local_db_files)
-  local_db_filenames_tables = local_db_filenames[local_db_filenames %like% '\\.txt$']
-  local_db_filenames_dbnhr = local_db_filenames[local_db_filenames %like% '\\.nhr$']
-  local_db_filenames_dbnsq = local_db_filenames[local_db_filenames %like% '\\.nsq$']
-  local_db_filenames_dbnin = local_db_filenames[local_db_filenames %like% '\\.nin$']
+  local_db_filenames_tables = local_db_filenames[grepl('\\.txt$', local_db_filenames)]
+  local_db_filenames_dbnhr = local_db_filenames[grepl('\\.nhr$', local_db_filenames)]
+  local_db_filenames_dbnsq = local_db_filenames[grepl('\\.nsq$', local_db_filenames)]
+  local_db_filenames_dbnin = local_db_filenames[grepl('\\.nin$', local_db_filenames)]
 
   # For each PCR primer pair, check 1) copy number table, 2) blast db files
   pcr_valid.dt = pcr.dt[
