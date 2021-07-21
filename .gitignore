@@ -13,3 +13,7 @@ src_old
 .ipynb_checkpoints
 pipeline.Rmd
 inst/database/*.*
+mergepairs_debug.R
+debug
+crap
+test.fasta
